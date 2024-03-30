@@ -15,7 +15,5 @@
 (system* "sh" "-c" "softflowd  -i wlp5s0 -n 127.0.0.1:2055 -v 9 -t maxlife=30" "&")
 
 ;; terminate after given time
-(shutdown-after-delay "nfcapd"  20;;(* 1 60)
-                      ) ;; 2 days
-(shutdown-after-delay "softflowd" 20;;(* 1 60)
-                      ) ;; 2 days
+(shutdown-after-delay "nfcapd" (* 2 60 60)) ;; 2 days
+(shutdown-after-delay "softflowd" (* 2 60 60)) ;; 2 days
