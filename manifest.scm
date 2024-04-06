@@ -6,8 +6,14 @@
        "guile"
        "bash"
        "sudo"
+       "lsof"
+       "net-tools"
 
        ;; PACKAGES
-       "r-dplyr"
-       "r-ggplot2"
+       "r-tidyverse"
+       ;; "r-dplyr"
+       ;; "r-ggplot2"
+       ;; "r-lubridate"
+       ;; "r-readr"
+       ;; "r-string"
        ))
