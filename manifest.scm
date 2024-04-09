@@ -8,9 +8,11 @@
        "sudo"
        "lsof"
        "net-tools"
+       "bind:utils"
 
        ;; PACKAGES
        "r-tidyverse"
+       "r-kableextra"
        ;; "r-dplyr"
        ;; "r-ggplot2"
        ;; "r-lubridate"
