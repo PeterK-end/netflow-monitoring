@@ -51,3 +51,21 @@ df_top_hosts <- nfcapd_data %>%
 kable(df_top_hosts,
       format = "latex",
       col.names = c("Host IP-Address", "MByte Volume", "tname"))
+
+
+# Top 3 destination Autonomous systems
+
+df_meta <- map_df(unique(filter(nfcapd_data, !str_detect(da, "^255|^ff|^10\\.|^127"))$da), # filtering broad- and multicast
+                  ~{
+                      whois_response <- system(paste("whois ", .x), intern=TRUE)
+                      origin_line <- whois_response[str_detect(whois_response, "origin|OriginAS")]
+                      country_line <- whois_response[str_detect(whois_response, "[Cc]ountry")]
+                      if(length(origin_line) == 0) origin_line <- ""
+                      if(length(country_line) == 0) country_line <- ""
+                      return(tibble(ip = .x,
+                                    as = str_extract(origin_line[1], "AS[:digit:]+"),
+                                    cntry = str_extract(country_line[1], "(?<=\\:).*") %>% str_squish))
+                  })
+
+df_top_as <- nfcapd_data %>%
+    left_join(df_meta, by = (da == ip))
