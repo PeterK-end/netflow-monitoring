@@ -2,51 +2,66 @@ library("tidyverse")
 library("kableExtra")
 
 nfcapd_data <- read_csv("aggregated_capture.csv",
-                         skip = 1,
-                         col_names = c("sa", "da", "ts",  "td", "pr", "sp", "dp", "pkt", "byt", "bps", "pps")) %>%
-    mutate(hour = hour(ts),
+                        col_names = c("sa", "da", "ts",  "td", "pr", "sp", "dp",
+                                      "pkt", "ibyt", "obyt", "bps", "pps"),
+                        col_types = cols(.default = col_character())) %>%
+    mutate(ts = as_datetime(ts),
+           td = hms(td),
+           hour = hour(ts),
            day = day(ts),
-           day = case_when(day == 2 ~ "2. April", day == 3 ~ "3. April", day == 4 ~ "4. April"),
-           bps = if_else(str_detect(bps, "M"),
-                         true = str_replace(bps, "M", "") %>% as.numeric %>% `*`(1000000),
-                         false = as.numeric(bps))) %>%
-    drop_na(byt, pkt, da)
+           day = case_when(day == 2 ~ "2. April",
+                           day == 3 ~ "3. April",
+                           day == 4 ~ "4. April"),
+           across(c(pkt, ibyt, obyt, bps, pps),
+                  ~if_else(str_detect(., "M"),
+                           true = str_replace(., "M", "") %>%
+                               as.numeric %>%
+                               `*`(1000000),
+                           false = as.numeric(.)))) %>%
+    drop_na(ibyt, pkt, da)
 
+# overall load in Mbyte
+print(sum((nfcapd_data$ibyt + nfcapd_data$obyt)/1000000000))
+# number of flows
+print(nrow(nfcapd_data))
 # very low because of low byte entries
-plot_bytes <- ggplot(data = group_by(nfcapd_data, hour, day) %>% summarise(bph = sum(byt)/1000000),
-                     mapping = aes(x = hour, y = bph)) +
+plot_bytes <- ggplot(data = group_by(nfcapd_data, hour, day) %>%
+                         summarise(bph = sum(ibyt)/1000000),
+                     mapping = aes(x = as.factor(hour), y = bph)) +
     geom_col() +
     facet_wrap(~day) +
-    labs(y = "Mbytes Total", x = "Hour") +
-    theme(text = element_text(size = 20))
+    labs(y = "Incoming Mbytes Total", x = "Hour")
 
 plot_packets <- ggplot(data = nfcapd_data,
                        mapping = aes(x = hour, y = sum(pkt))) +
     geom_col() +
     facet_wrap(~day) +
-    labs(y = "Packets Total", x = "Hour") +
-    theme(text = element_text(size = 20))
+    labs(y = "Incoming Packets Total", x = "Hour")
 
 ggsave(plot = plot_bytes,
-       filename = "plot_bytes.pdf")
+       filename = "plot_bytes.pdf",
+       width = 12,
+       height = 8,
+       units = "cm")
 
 ggsave(plot = plot_packets,
-       filename = "plot_packets.pdf")
+       filename = "plot_packets.pdf",
+       width = 12,
+       height = 8,
+       units = "cm")
 
 # With which IP Icommunicate with the most?
 
 df_top_hosts <- nfcapd_data %>%
-    summarise(sum_Mbyt = round(sum(byt)/1000000, 2)) %>%
-    slice_max(n = 20, order_by = sum_Mbyt) %>%
+    group_by(da) %>%
+    summarise(sum_Mbyt = round(sum(ibyt)/1000000)) %>%
+    slice_max(n = 10, order_by = sum_Mbyt) %>%
     mutate(domain= map_chr(da, ~ {
         ns_response <- system(paste("nslookup ", .x), intern=TRUE)
-
-        if (length(ns_response) < 3) {
+        tname <- ns_response[str_detect(ns_response, "\tname =")]
+        if (length(tname) == 0) {
             return("None")
         } else {
-            print(ns_response)
-            tname <- ns_response[str_detect(ns_response, "\tname =")]
-            print(tname)
             return(str_split(tname, "= ")[[1]][2])
         }
     }))
