@@ -70,8 +70,8 @@ df_top_hosts <- nfcapd_data %>%
 sink("top_hosts.tex")
 kable(df_top_hosts,
       format = "latex",
-      col.names = c("Host IP-Address", "MByte Total", "Domain"),
-      caption = "Top 20 destinations based on number of transmitted bytes")
+      col.names = c("Dest. IP-Address", "MByte Total", "Domain"),
+      caption = "Top 10 IP-Addresses based on transmitted bytes")
 sink()
 
 
@@ -100,7 +100,7 @@ df_top_as <- nfcapd_data %>%
     left_join(df_meta, by = "da") %>%
     drop_na(as) %>%
     group_by(as, cntry, netname) %>%
-    summarise(sum_Mbyte = round(sum(byt)/1000000, 2)) %>%
+    summarise(sum_Mbyte = round(sum(ibyt)/1000000, 2)) %>%
     arrange(-sum_Mbyte) %>%
     head(5)
 
@@ -114,6 +114,13 @@ sink()
 # interesting destination ports
 df_top_ip_x_port <- nfcapd_data %>%
     group_by(da, pr, sp) %>%
-    summarise(sum_Mbyt = sum(byt)/1000000) %>%
+    summarise(sum_Mbyt = round(sum(ibyt)/1000000, 2)) %>%
     arrange(-sum_Mbyt) %>%
-    head(20)
+    head(15)
+
+sink("top_ip_x_port.tex")
+kable(df_top_ip_x_port,
+      format = "latex",
+      col.names = c("IP-Address", "Protocol", "Source Port", "MByte Total"),
+      caption = "Top 15 IP-Addresses based on transmitted bytes by protocol and source port")
+sink()
