@@ -27,16 +27,17 @@ print(nrow(nfcapd_data))
 # very low because of low byte entries
 plot_bytes <- ggplot(data = group_by(nfcapd_data, hour, day) %>%
                          summarise(bph = sum(ibyt)/1000000),
-                     mapping = aes(x = as.factor(hour), y = bph)) +
+                     mapping = aes(x = hour, y = bph)) +
     geom_col() +
+    scale_x_continuous(breaks = seq(8,22, 2)) +
     facet_wrap(~day) +
-    labs(y = "Incoming Mbytes Total", x = "Hour")
+    labs(y = "Transmitted MB Total", x = "Hour")
 
 plot_packets <- ggplot(data = nfcapd_data,
                        mapping = aes(x = hour, y = sum(pkt))) +
     geom_col() +
     facet_wrap(~day) +
-    labs(y = "Incoming Packets Total", x = "Hour")
+    labs(y = "Transmitted Packets Total", x = "Hour")
 
 ggsave(plot = plot_bytes,
        filename = "plot_bytes.pdf",
